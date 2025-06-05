@@ -1,5 +1,6 @@
-from app.database import db
+from api import db
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class User(db.Model):
@@ -7,7 +8,9 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(256), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_admin = db.Column(db.Boolean, default=False)
 
     def to_dict(self):
         """转换为字典（用于JSON响应）"""
@@ -18,14 +21,8 @@ class User(db.Model):
             'created_at': self.created_at.isoformat()
         }
 
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
 
-class Post(db.Model):
-    """文章模型"""
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    # 关系
-    author = db.relationship('User', backref=db.backref('posts', lazy=True))
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
