@@ -1,7 +1,10 @@
 from api.app.post.routes import post_bp
 from flask import jsonify, request, current_app
+from sqlalchemy.exc import SQLAlchemyError
 from api.app.post.models import Post
 from api import db
+from api.log import logger
+from api.common.error_handler import DataCommitException
 
 
 @post_bp.route('/create_post', methods=['POST'])
@@ -18,7 +21,12 @@ def create_post():
         user_id=data['user_id']
     )
     db.session.add(post)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logger.exception(e)
+        raise DataCommitException
     return jsonify({
         "id": post.id,
         "title": post.title,

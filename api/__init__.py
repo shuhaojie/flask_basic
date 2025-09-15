@@ -2,8 +2,8 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
-from api.log import setup_logging
-
+from api.log import init_logger
+from api.common.error_handler import register_error_handler
 # 创建扩展对象（不绑定应用）
 db = SQLAlchemy()
 migrate = Migrate()
@@ -31,8 +31,11 @@ def create_app(config):
     # 初始化数据库迁移
     register_migrate(app)
 
+    # 注册失败
+    register_error_handler(app)
+
     # 导入日志模块
-    setup_logging(app)
+    init_logger()
 
     # 初始化jwt
     jwt.init_app(app)
